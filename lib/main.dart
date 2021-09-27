@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:graphql_flutter/graphql_flutter.dart';
 
-class CreateUserInput {
-  final String username = "revanth";
-  final String email = "revanth@gmail.com";
-  final String role = "user";
-  final String password = "12345";
-}
+// ignore: import_of_legacy_library_into_null_safe
+import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 const user = """
 query {
@@ -37,7 +33,7 @@ const edit = """
 mutation updateUser(\$email: String!, \$password: String!,\$username:String!,\$role:String!){
   updateUser(
     updateUserInput:{
-      id:"630185e4-d4ae-4c10-83e6-77e0f5b260a6"
+    id:"630185e4-d4ae-4c10-83e6-77e0f5b260a6"
     email: \$email
     password: \$password
     role: \$role
@@ -50,13 +46,44 @@ mutation updateUser(\$email: String!, \$password: String!,\$username:String!,\$r
   }
 }
 """;
+const login = """
+mutation login(\$email:String!,\$password:String!){
+   login(login:{
+    email:\$email
+    password:\$password
+  }){
+    token
+    userId
+  }
+}
+""";
+void upDateSharedPreferences(String token, String userId) async {
+  print(token);
+  print(userId);
+  SharedPreferences _prefs = await SharedPreferences.getInstance();
+  _prefs.setString('token', token);
+  _prefs.setString('userId', userId);
+}
+
+checkPrefsForUser() async {
+  SharedPreferences _prefs = await SharedPreferences.getInstance();
+  var _sharedToken = _prefs.getString('token');
+  var _sharedId = _prefs.getString('userId');
+  print(_sharedId);
+  print(_sharedToken);
+  userId = _sharedId;
+  auth = _sharedToken;
+}
 
 final postEmailController = TextEditingController();
 final postPasswordController = TextEditingController();
 final postUserNameController = TextEditingController();
 final postRoleController = TextEditingController();
+var userId;
+var auth;
+//var session = FlutterSession()
 
-void main() {
+void main() async {
   final HttpLink httpLink = HttpLink(
     'http://localhost:5000/graphql',
   );
@@ -99,8 +126,18 @@ class _MyAppState extends State<MyApp> {
         ),
         body: Mutation(
           // ignore: deprecated_member_use
-          options: MutationOptions(document: gql(edit)),
+          options: MutationOptions(document: gql(login)),
           builder: (runMutation, result) {
+            //var data = result?.data?['login'];
+            //print(data);
+
+            // return ListView.builder(
+            //     itemCount: repositories.length,
+            //     itemBuilder: (context, index) {
+            //       final repository = repositories[index];
+
+            //       return Text(repository['username']);
+            //     });
             return Scaffold(
               body: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -141,10 +178,16 @@ class _MyAppState extends State<MyApp> {
                       onPressed: () {
                         runMutation({
                           'email': postEmailController.text,
-                          'password': postPasswordController.text,
-                          'username': postUserNameController.text,
-                          'role': postRoleController.text,
+                          'password': postPasswordController.text
                         });
+                        if (result?.data == null) {
+                          return null;
+                        } else {
+                          var userId = result?.data!['login']['userId'];
+                          var token = result?.data!['login']['token'];
+                          upDateSharedPreferences(token, userId);
+                          checkPrefsForUser();
+                        }
                       },
                       child: const Text('Create Post'),
                     ),
@@ -153,12 +196,18 @@ class _MyAppState extends State<MyApp> {
                         padding: const EdgeInsets.all(8),
                         color: Colors.white,
                         child: Text(
-                          result!.data == null
+                          result?.data == null
                               ? '''Post details coming up shortly,'''
                                   ''' Kindly enter details and create a post'''
-                              : result.data.toString(),
+                              : result?.data?['login']['userId'],
                         ),
                       ),
+                    ),
+                    Card(
+                      child: Text(userId ?? 'nodata'),
+                    ),
+                    Card(
+                      child: Text(auth ?? 'no token'),
                     )
                   ],
                 ),
