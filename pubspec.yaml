@@ -31,6 +31,7 @@ dependencies:
   graphql_flutter: ^5.0.0
   shared_preferences:
   flutter_redux:
+  get:
 
 dev_dependencies:
   flutter_test:

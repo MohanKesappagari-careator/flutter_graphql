@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_demo/home.dart';
 import 'package:flutter_demo/modals/login.model.dart';
 import 'package:flutter_demo/redux/reducer.dart';
+import 'package:get/get.dart';
 
 // ignore: import_of_legacy_library_into_null_safe
 import 'package:graphql_flutter/graphql_flutter.dart';
@@ -59,7 +61,7 @@ mutation login(\$email:String!,\$password:String!){
   }
 }
 """;
-void upDateSharedPreferences(String token, String userId) async {
+Future upDateSharedPreferences(String token, String userId) async {
   SharedPreferences _prefs = await SharedPreferences.getInstance();
   await _prefs.setString('token', token);
   await _prefs.setString('userId', userId);
@@ -124,7 +126,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       home: Scaffold(
         appBar: AppBar(
           title: Text('Helllo'),
@@ -132,7 +134,19 @@ class _MyAppState extends State<MyApp> {
         ),
         body: Mutation(
           // ignore: deprecated_member_use
-          options: MutationOptions(document: gql(login)),
+          options: MutationOptions(
+            document: gql(login),
+            onCompleted: (dynamic resultData) {
+              var userId = resultData?['login']['userId'];
+              var token = resultData?['login']['token'];
+              print(userId);
+              print(token);
+              upDateSharedPreferences(token, userId);
+              checkPrefsForUser();
+              print(resultData?['login']['token']);
+              Get.to(HomeScreen());
+            },
+          ),
           builder: (runMutation, result) {
             if (result!.hasException) {
               return Text(result.exception.toString());
@@ -169,13 +183,6 @@ class _MyAppState extends State<MyApp> {
                       ),
                     ),
                     TextField(
-                      controller: postUserNameController,
-                      decoration: const InputDecoration(
-                        hintText: 'Post UserName',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                      ),
-                    ),
-                    TextField(
                       controller: postPasswordController,
                       decoration: const InputDecoration(
                         hintText: 'Post Password',
@@ -183,31 +190,14 @@ class _MyAppState extends State<MyApp> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextField(
-                      controller: postRoleController,
-                      decoration: const InputDecoration(
-                        hintText: 'Post Role',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                      ),
-                    ),
                     TextButton(
                       onPressed: () {
                         runMutation({
                           'email': postEmailController.text,
                           'password': postPasswordController.text
                         });
-                        if (result.data == null) {
-                          return null;
-                        } else {
-                          var userId = result.data?['login']['userId'];
-                          var token = result.data?['login']['token'];
-                          print(userId);
-                          print(token);
-                          upDateSharedPreferences(token, userId);
-                          checkPrefsForUser();
-                        }
                       },
-                      child: const Text('Create Post'),
+                      child: const Text('Login'),
                     ),
                     Card(
                       child: Container(
@@ -222,8 +212,11 @@ class _MyAppState extends State<MyApp> {
                       ),
                     ),
                     Card(
-                      child: Text('data'),
-                    )
+                      child: Text(userId ?? 'login userId'),
+                    ),
+                    Card(
+                      child: Text(auth ?? 'login token'),
+                    ),
                   ],
                 ),
               ),
