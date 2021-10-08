@@ -30,6 +30,7 @@ dependencies:
   fluttertoast: ^8.0.8
   graphql_flutter: ^5.0.0
   shared_preferences:
+  flutter_redux:
 
 dev_dependencies:
   flutter_test:

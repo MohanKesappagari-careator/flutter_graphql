@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_demo/modals/login.model.dart';
+import 'package:flutter_demo/redux/reducer.dart';
 
 // ignore: import_of_legacy_library_into_null_safe
 import 'package:graphql_flutter/graphql_flutter.dart';
@@ -58,11 +60,15 @@ mutation login(\$email:String!,\$password:String!){
 }
 """;
 void upDateSharedPreferences(String token, String userId) async {
-  print(token);
-  print(userId);
   SharedPreferences _prefs = await SharedPreferences.getInstance();
-  _prefs.setString('token', token);
-  _prefs.setString('userId', userId);
+  await _prefs.setString('token', token);
+  await _prefs.setString('userId', userId);
+
+//   SharedPreferences _prefs = await SharedPreferences.getInstance();
+  var _sharedToken = _prefs.getString('token');
+  var _sharedId = _prefs.getString('userId');
+  print(_sharedId);
+  print(_sharedToken);
 }
 
 checkPrefsForUser() async {
@@ -128,6 +134,16 @@ class _MyAppState extends State<MyApp> {
           // ignore: deprecated_member_use
           options: MutationOptions(document: gql(login)),
           builder: (runMutation, result) {
+            if (result!.hasException) {
+              return Text(result.exception.toString());
+            }
+
+            if (result.isLoading) {
+              return Center(
+                child: const CircularProgressIndicator(),
+              );
+            }
+
             //var data = result?.data?['login'];
             //print(data);
 
@@ -180,11 +196,13 @@ class _MyAppState extends State<MyApp> {
                           'email': postEmailController.text,
                           'password': postPasswordController.text
                         });
-                        if (result?.data == null) {
+                        if (result.data == null) {
                           return null;
                         } else {
-                          var userId = result?.data!['login']['userId'];
-                          var token = result?.data!['login']['token'];
+                          var userId = result.data?['login']['userId'];
+                          var token = result.data?['login']['token'];
+                          print(userId);
+                          print(token);
                           upDateSharedPreferences(token, userId);
                           checkPrefsForUser();
                         }
@@ -196,18 +214,15 @@ class _MyAppState extends State<MyApp> {
                         padding: const EdgeInsets.all(8),
                         color: Colors.white,
                         child: Text(
-                          result?.data == null
+                          result.data == null
                               ? '''Post details coming up shortly,'''
                                   ''' Kindly enter details and create a post'''
-                              : result?.data?['login']['userId'],
+                              : result.data?['login']['userId'],
                         ),
                       ),
                     ),
                     Card(
-                      child: Text(userId ?? 'nodata'),
-                    ),
-                    Card(
-                      child: Text(auth ?? 'no token'),
+                      child: Text('data'),
                     )
                   ],
                 ),
