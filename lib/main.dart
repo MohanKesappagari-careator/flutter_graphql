@@ -97,8 +97,7 @@ void main() async {
   );
 
   final AuthLink authLink = AuthLink(
-    getToken: () async =>
-        'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im1vaGFuIiwic3ViIjoiODY0NzM5YmItZWM5Mi00MTQwLThhMWYtYmU4OTJiYTY2ODI2IiwiZW1haWwiOiJtb2hhbkBnbWFpbC5jb20iLCJyb2xlIjpudWxsLCJpYXQiOjE2MzI1NjIyNzksImV4cCI6MTYzMjU2NTg3OX0.96ijTlQYnHv3TSJyoiZNH4mN_FlfyeEis79C27tdOCM',
+    getToken: () async => 'Bearer $auth',
     // OR
     // getToken: () => 'Bearer <YOUR_PERSONAL_ACCESS_TOKEN>',
   );
